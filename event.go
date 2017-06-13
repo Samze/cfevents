@@ -41,13 +41,13 @@ func (e *CfEvent) Run() {
 	for {
 		payLoad, err := e.GetTopic()
 		if err != nil {
-			fmt.Printf("err getting from topic: %v", payLoad)
+			fmt.Printf("err getting from topic: %v\n", payLoad)
 		} else if payLoad == nil {
 			fmt.Println("nothing on the topic")
 		} else {
 			e.handler(payLoad)
 		}
-		time.Sleep(3)
+		time.Sleep(3 * time.Second)
 	}
 }
 
