@@ -41,7 +41,7 @@ func (e *CfEvent) Run() {
 	for {
 		payLoad, err := e.GetTopic()
 		if err != nil {
-			fmt.Printf("err getting from topic: %v\n", payLoad)
+			fmt.Printf("err getting from topic: %v\n", err)
 		} else if payLoad == nil {
 			fmt.Println("nothing on the topic")
 		} else {
@@ -63,15 +63,15 @@ func (e *CfEvent) GetTopic() (map[string]interface{}, error) {
 		return nil, nil
 	}
 
-	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("unexpected response while getting topic %d", res.StatusCode)
-	}
-
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
+	}
+
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("unexpected response while getting topic %d with body %+v", res.StatusCode, string(body))
 	}
 
 	var payLoad map[string]interface{}
