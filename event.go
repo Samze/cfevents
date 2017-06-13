@@ -58,11 +58,6 @@ func (e *CfEvent) GetTopic() (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	if res.StatusCode == 204 {
-		fmt.Println("no content")
-		return nil, nil
-	}
-
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
