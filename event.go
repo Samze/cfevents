@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -17,7 +18,9 @@ type CfEvent struct {
 	appName string
 }
 
-func NewCfEvent(handler eventHandler, appName string) CfEvent {
+func NewCfEvent(handler eventHandler) CfEvent {
+	appName := getAppName()
+
 	return CfEvent{
 		handler,
 		appName,
@@ -25,6 +28,16 @@ func NewCfEvent(handler eventHandler, appName string) CfEvent {
 }
 
 func (e *CfEvent) Run() {
+	http.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {})
+
+	go func() {
+		fmt.Println("listening...")
+		err := http.ListenAndServe(":"+os.Getenv("PORT"), nil)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
 	for {
 		payLoad, err := e.GetTopic()
 		if err != nil {
@@ -50,6 +63,10 @@ func (e *CfEvent) GetTopic() (map[string]interface{}, error) {
 		return nil, nil
 	}
 
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("unexpected response while getting topic %d", res.StatusCode)
+	}
+
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
@@ -64,4 +81,25 @@ func (e *CfEvent) GetTopic() (map[string]interface{}, error) {
 	}
 
 	return payLoad, nil
+}
+
+func getAppName() string {
+	vcapApp := os.Getenv("VCAP_APPLICATION")
+	if vcapApp == "" {
+		fmt.Println("App name cannot be found in vcap")
+		os.Exit(1)
+	}
+
+	var vcap VcapApplication
+
+	err := json.Unmarshal([]byte(vcapApp), &vcap)
+	if err != nil {
+
+	}
+
+	return vcap.AppName
+}
+
+type VcapApplication struct {
+	AppName string `json:"application_name"`
 }
